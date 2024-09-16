@@ -1,5 +1,12 @@
-import { View, FlatList, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import {
+  View,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Text,
+  RefreshControl,
+} from "react-native";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "../../components/EmptyState";
 import { getUserPosts, signOut } from "../../lib/appwrite";
@@ -12,7 +19,7 @@ import { router } from "expo-router";
 
 const Profile = () => {
   const { user, setUser, setIsLoggedIn } = useGlobalContext();
-  const { data: posts } = useAppwrite(() => getUserPosts(user.$id));
+  const { data: posts, refetch } = useAppwrite(() => getUserPosts(user.$id));
 
   const logout = async () => {
     await signOut();
@@ -21,6 +28,12 @@ const Profile = () => {
     router.replace("/sign-in");
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
   return (
     <SafeAreaView className="bg-primary h-full">
       <FlatList
@@ -64,6 +77,11 @@ const Profile = () => {
                 titleStyles="text-xl"
               />
             </View>
+            <View>
+              <Text className="text-gray-100 font-pbold text-[24px] mt-10">
+                Your Posts
+              </Text>
+            </View>
           </View>
         )}
         ListEmptyComponent={() => (
@@ -72,6 +90,9 @@ const Profile = () => {
             subtitle="No videos found for this search query"
           />
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </SafeAreaView>
   );
